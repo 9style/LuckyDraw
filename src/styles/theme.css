@@ -1,0 +1,76 @@
+:root {
+  --bg-deep: #14082b;
+  --bg-mid: #1a1033;
+  --bg-soft: #241a4a;
+  --gold: #e8c074;
+  --gold-bright: #f7dfa8;
+  --gold-dim: #a8863f;
+  --text-main: #f2ecff;
+  --text-sub: #b8a9d9;
+  --text-dim: #7d6fa0;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-line: rgba(232, 192, 116, 0.28);
+  --radius: 16px;
+  --tap: 44px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg-deep);
+  color: var(--text-main);
+  font-family: "PingFang SC", "HarmonyOS Sans", "Microsoft YaHei", system-ui, sans-serif;
+  overscroll-behavior-y: none;
+  /* 抑制双击缩放。viewport 里的 user-scalable=no 在 iOS Safari 上会被忽略，
+     touch-action 才是跨引擎真正生效的那一个（PRD 11.2 现场防误触）。 */
+  touch-action: manipulation;
+}
+
+/* 全屏容器：flex 纵向布局 + 四边安全区内边距。
+   min-height 用 100dvh（动态视口高度，随移动端地址栏伸缩），100vh 作旧引擎回退。
+
+   ⚠️ 布局约定：子元素一律用 flex:1 填充本容器，**绝不再各自声明 100vh**。
+   父子都声明 100vh 时，子元素会超出父元素的 content box（父元素带安全区内边距），
+   在刘海屏上凭空多出一段滚动、并让垂直居中的内容偏心。
+   因为 viewport meta 带 viewport-fit=cover，env() 内边距在刘海屏上是非零的。 */
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(ellipse at 50% 0%, var(--bg-soft) 0%, var(--bg-mid) 45%, var(--bg-deep) 100%);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold), var(--gold-dim));
+  color: #2a1a05;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0 2rem;
+}
+
+.btn-gold:disabled {
+  filter: grayscale(0.8) brightness(0.6);
+  cursor: not-allowed;
+}
+
+.gold-text {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold), var(--gold-dim));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

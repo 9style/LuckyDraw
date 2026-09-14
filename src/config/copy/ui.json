@@ -1,0 +1,36 @@
+{
+  "intro": {
+    "tagline": "打工人能量图鉴",
+    "desc1": "填 4 个空，摇一支签",
+    "desc2": "看看今天的你，是哪种职场生物"
+  },
+  "divining": {
+    "title": "正在为你摇签",
+    "steps": ["静心", "摇签", "落定"],
+    "loading": "正在为您绘制天命海报…"
+  },
+  "result": {
+    "identityLabel": "你的职场身份是",
+    "scoresLabel": "四维能量",
+    "roastLabel": "扎心时刻",
+    "deptLabel": "你的部门玄学",
+    "fortuneLabel": "你抽到的是",
+    "luckyLabel": "今日彩蛋",
+    "yiLabel": "宜",
+    "jiLabel": "忌",
+    "luckyColor": "幸运色",
+    "luckyNumber": "幸运数字",
+    "luckyDirection": "贵人方位",
+    "luckyZodiac": "贵人星座",
+    "again": "再算一次"
+  },
+  "lock": {
+    "gateTitle": "完整解读已生成",
+    "gateHint": "输入今日口令解锁",
+    "gatePlaceholder": "今日口令",
+    "gateButton": "解 锁",
+    "gateError": "口令不对哦，今日口令请向摊主获取",
+    "gateRetry": "再看看口令，就在摊位易拉宝上",
+    "lockedHint": "解锁后可见"
+  }
+}

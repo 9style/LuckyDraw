@@ -1,0 +1,114 @@
+.tube-stage {
+  position: relative;
+  width: 180px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+.tube {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 96px;
+  height: 150px;
+  margin-left: -48px;
+  border-radius: 10px 10px 14px 14px;
+  background: linear-gradient(180deg, #6b3f2a 0%, #4a2a1c 60%, #352014 100%);
+  border: 2px solid var(--gold-dim);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.55);
+}
+
+.tube::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(232, 192, 116, 0.35);
+  border-radius: 6px;
+}
+
+/* 0.42s 是**单次**摇摆周期；总摇签时长由 DivinationView.vue 的 SHAKE_MS = 1500 决定
+   （1500 / 420 ≈ 3.57 个周期，所以收尾会停在中途）。改一处必须改另一处。 */
+.tube--shaking {
+  animation: tube-shake 0.42s ease-in-out infinite;
+}
+
+@keyframes tube-shake {
+  0%, 100% { transform: rotate(-7deg); }
+  50%      { transform: rotate(7deg); }
+}
+
+.stick {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  width: 26px;
+  height: 128px;
+  margin-left: -13px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, #f3e2bd 0%, #e2c793 55%, #c9a86a 100%);
+  border: 1px solid var(--gold-dim);
+  color: #6b4a12;
+  font-size: 15px;
+  font-weight: 700;
+  writing-mode: vertical-rl;
+  text-align: center;
+  padding-top: 12px;
+  opacity: 0;
+}
+
+/* 1.05s 与 DivinationView.vue 的 DRAW_MS = 1050 是一对，改一处必须改另一处
+   （两处没有共享 token，只靠这条注释维系）。 */
+.stick--drawn {
+  animation: stick-draw 1.05s cubic-bezier(0.22, 1.1, 0.36, 1) forwards;
+}
+
+@keyframes stick-draw {
+  0%   { opacity: 0; transform: translateY(96px) scale(0.85); }
+  45%  { opacity: 1; transform: translateY(-22px) scale(1.06); }
+  70%  { transform: translateY(-8px) scale(1); }
+  100% { opacity: 1; transform: translateY(-14px) scale(1.14); }
+}
+
+.glow {
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 192, 116, 0.42) 0%, rgba(232, 192, 116, 0) 68%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.glow--on {
+  animation: glow-pulse 0.9s ease-out forwards;
+}
+
+@keyframes glow-pulse {
+  0%   { opacity: 0; transform: scale(0.7); }
+  50%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.25; transform: scale(1.15); }
+}
+
+.starfield {
+  position: absolute;
+  inset: -40px;
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 22%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 72% 14%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 38% 68%, rgba(232, 192, 116, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 86% 58%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 10% 84%, rgba(232, 192, 116, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 58% 92%, rgba(255, 255, 255, 0.45), transparent);
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tube--shaking,
+  .stick--drawn,
+  .glow--on,
+  .starfield { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

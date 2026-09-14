@@ -1,0 +1,44 @@
+{
+  "dimensions": ["moYu", "shengZhi", "renMai", "caiYun"],
+  "dimensionLabels": {
+    "moYu": "摸鱼指数",
+    "shengZhi": "升职运",
+    "renMai": "人脉运",
+    "caiYun": "财运"
+  },
+  "zodiacBase": {
+    "aries":       { "moYu": 45, "shengZhi": 90, "renMai": 70, "caiYun": 75 },
+    "taurus":      { "moYu": 90, "shengZhi": 45, "renMai": 75, "caiYun": 70 },
+    "gemini":      { "moYu": 70, "shengZhi": 75, "renMai": 45, "caiYun": 90 },
+    "cancer":      { "moYu": 75, "shengZhi": 70, "renMai": 90, "caiYun": 45 },
+    "leo":         { "moYu": 55, "shengZhi": 80, "renMai": 70, "caiYun": 75 },
+    "virgo":       { "moYu": 80, "shengZhi": 55, "renMai": 75, "caiYun": 70 },
+    "libra":       { "moYu": 70, "shengZhi": 75, "renMai": 55, "caiYun": 80 },
+    "scorpio":     { "moYu": 75, "shengZhi": 70, "renMai": 80, "caiYun": 55 },
+    "sagittarius": { "moYu": 65, "shengZhi": 70, "renMai": 75, "caiYun": 70 },
+    "capricorn":   { "moYu": 70, "shengZhi": 65, "renMai": 70, "caiYun": 75 },
+    "aquarius":    { "moYu": 75, "shengZhi": 70, "renMai": 65, "caiYun": 70 },
+    "pisces":      { "moYu": 70, "shengZhi": 75, "renMai": 70, "caiYun": 65 }
+  },
+  "tenureBonus": {
+    "lt1":  { "moYu": -6, "shengZhi": 8,  "renMai": 2,  "caiYun": -4 },
+    "1to3": { "moYu": -1, "shengZhi": 3,  "renMai": 3,  "caiYun": 1 },
+    "3to5": { "moYu": 3,  "shengZhi": -2, "renMai": 5,  "caiYun": 3 },
+    "gt5":  { "moYu": 8,  "shengZhi": -4, "renMai": 6,  "caiYun": 5 }
+  },
+  "deptBonus": {
+    "tech":    { "moYu": 6,  "shengZhi": -2, "renMai": -4, "caiYun": 2 },
+    "product": { "moYu": 2,  "shengZhi": 3,  "renMai": 4,  "caiYun": -3 },
+    "market":  { "moYu": -5, "shengZhi": 5,  "renMai": 8,  "caiYun": 5 },
+    "ops":     { "moYu": -3, "shengZhi": 2,  "renMai": 6,  "caiYun": -1 },
+    "admin":   { "moYu": 4,  "shengZhi": -4, "renMai": 5,  "caiYun": 3 },
+    "other":   { "moYu": 0,  "shengZhi": 0,  "renMai": 0,  "caiYun": 0 }
+  },
+  "jitter": 6,
+  "bands": [
+    { "max": 39,  "key": "wei",  "label": "危",  "emoji": "💀" },
+    { "max": 59,  "key": "ping", "label": "平",  "emoji": "😐" },
+    { "max": 79,  "key": "ji",   "label": "吉",  "emoji": "👍" },
+    { "max": 100, "key": "daji", "label": "大吉", "emoji": "🌟" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "tech":    { "label": "技术 / 研发",   "jokeKey": "tech" },
+  "product": { "label": "产品 / 设计",   "jokeKey": "product" },
+  "market":  { "label": "市场 / 销售",   "jokeKey": "market" },
+  "ops":     { "label": "运营 / 客服",   "jokeKey": "ops" },
+  "admin":   { "label": "人力 / 行政 / 财务", "jokeKey": "admin" },
+  "other":   { "label": "其他（自填）",  "jokeKey": "other" }
+}
