@@ -1,0 +1,28 @@
+{
+  "canvas": { "w": 750, "h": 1334, "marginTop": 64, "marginBottom": 16 },
+  "palette": {
+    "bgDeep": "#14082b",
+    "bgMid": "#1a1033",
+    "bgSoft": "#241a4a",
+    "gold": "#e8c074",
+    "goldBright": "#f7dfa8",
+    "goldDim": "#a8863f",
+    "textMain": "#f2ecff",
+    "textSub": "#b8a9d9",
+    "textDim": "#7d6fa0",
+    "cardBg": "rgba(255,255,255,0.05)",
+    "cardLine": "rgba(232,192,116,0.28)"
+  },
+  "elements": [
+    { "key": "title",      "h": 42,  "gap": 22, "font": 34, "minFont": 24, "maxWidth": 620, "color": "gold" },
+    { "key": "subtitle",   "h": 24,  "gap": 68, "font": 18, "minFont": 12, "maxWidth": 620, "color": "textSub" },
+    { "key": "name",       "h": 70,  "gap": 18, "font": 64, "minFont": 28, "maxWidth": 620, "color": "textMain" },
+    { "key": "identity",   "h": 70,  "gap": 30, "font": 36, "minFont": 20, "maxWidth": 560, "color": "gold" },
+    { "key": "radar",      "h": 300, "gap": 30, "font": 20, "minFont": 12, "maxWidth": 560, "color": "textSub" },
+    { "key": "scoreRow",   "h": 30,  "gap": 30, "font": 20, "minFont": 12, "maxWidth": 620, "color": "textSub" },
+    { "key": "fortune",    "h": 230, "gap": 34, "font": 28, "minFont": 16, "maxWidth": 560, "color": "textMain" },
+    { "key": "qrcode",     "h": 140, "gap": 22, "font": 14, "minFont": 10, "maxWidth": 140, "color": "textDim" },
+    { "key": "scanHint",   "h": 24,  "gap": 12, "font": 18, "minFont": 12, "maxWidth": 620, "color": "textSub" },
+    { "key": "disclaimer", "h": 48,  "gap": 0,  "font": 18, "minFont": 12, "maxWidth": 660, "color": "textDim" }
+  ]
+}

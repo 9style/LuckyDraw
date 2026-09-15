@@ -29,6 +29,12 @@ describe('runtimeConfig 装配', () => {
     expect(runtimeConfig.zodiacs).toHaveLength(12)
     runtimeConfig.zodiacs.forEach((z) => expect(runtimeConfig.zodiacLabels[z]).toBeTruthy())
   })
+
+  it('海报配置已挂载且画布尺寸固定', () => {
+    expect(runtimeConfig.poster.canvas.w).toBe(750)
+    expect(runtimeConfig.poster.canvas.h).toBe(1334)
+    expect(runtimeConfig.poster.elements.length).toBeGreaterThan(0)
+  })
 })
 
 describe('scoring.json 约束', () => {

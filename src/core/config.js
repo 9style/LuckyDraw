@@ -2,6 +2,7 @@
 import settings from '../config/settings.json'
 import departments from '../config/departments.json'
 import scoring from '../config/scoring.json'
+import poster from '../config/poster.json'
 import copyZodiac from '../config/copy/zodiac.json'
 import copyTenure from '../config/copy/tenure.json'
 import copyDepartment from '../config/copy/department.json'
@@ -46,6 +47,7 @@ export const runtimeConfig = {
   settings,
   departments,
   scoring,
+  poster,
   tenures: TENURES,
   tenureLabels: TENURE_LABELS,
   zodiacs: ZODIACS,
