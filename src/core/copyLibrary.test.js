@@ -9,7 +9,10 @@ import fortunes from '../config/copy/fortunes.json'
 import lucky from '../config/copy/lucky.json'
 import ui from '../config/copy/ui.json'
 import rules from '../config/lint-rules.json'
+import posterCfg from '../config/poster.json'
 import { ZODIACS, TENURES } from './config.js'
+import { defaultMeasure, wrapText } from './poster/measure.js'
+import { FORTUNE_LAYOUT, LINE_HEIGHT, formatYiJi } from './poster/poster.js'
 
 const DEPT_KEYS = ['tech', 'product', 'market', 'ops', 'admin', 'other']
 const DIMS = ['moYu', 'shengZhi', 'renMai', 'caiYun']
@@ -196,5 +199,92 @@ describe('ui.json', () => {
     expect(typeof ui.poster.subtitle).toBe('string')
     expect(typeof ui.poster.scanHint).toBe('string')
     expect(ui.poster.disclaimer.length).toBeGreaterThan(0)
+  })
+})
+
+// ── 海报版式容量 ────────────────────────────────────────────────
+//
+// 「配置就是输入面」：运营直接改 copy/*.json，而唯一的自动守卫是 lint-rules.json
+// 的「单条 ≤ 60 字」。60 字的身份标签或签辞，海报上根本画不下 —— 海报那边既没有
+// 折行余量也没有溢出裁剪，超出的部分会直接顶穿卡片边框画到画布上
+//（?debug=poster 验收页第 10 张画的就是这个）。所以「内容装得进版式」这件事
+// 必须在**改文案的那一刻**就报错，而不是等谁肉眼去验收页上扫。
+//
+// 这正是 lint-copy.js 的路数：装不下的内容，在构建期就拦掉。
+//
+// ⚠️ 带宽一律从 poster.json 读、版式偏移一律从 poster.js 读，两边都不手抄。
+// 手抄的坐标会和真实版式漂移，而漂移的方向恰好是最坏的那种：
+// 测试说没事、海报上压字。
+describe('海报版式容量（内容必须装得进版式）', () => {
+  const boxOf = (key) => posterCfg.elements.find((e) => e.key === key)
+  const IDENTITY_BOX = boxOf('identity')
+  const FORTUNE_BOX = boxOf('fortune')
+
+  /**
+   * 给定「首行基线中心」与「下方禁区的上沿」（同为卡片内的相对坐标，
+   * 因为海报是 textBaseline='middle'：一行文字上下各占 fontPx/2），
+   * 返回这段空间最多放得下几行。
+   */
+  function lineCapacity(firstCenterY, forbiddenTopY, fontPx) {
+    const lineH = fontPx * LINE_HEIGHT
+    let n = 0
+    while (firstCenterY + n * lineH + fontPx / 2 < forbiddenTopY) n++
+    return n
+  }
+
+  it('容量推导本身是正的（否则下面几条会空转恒真）', () => {
+    expect(lineCapacity(FORTUNE_LAYOUT.verseOffset, FORTUNE_BOX.h - FORTUNE_LAYOUT.yiJiOffset, FORTUNE_LAYOUT.verseFont))
+      .toBeGreaterThan(0)
+    expect(IDENTITY_BOX.maxWidth).toBeGreaterThan(0)
+    expect(IDENTITY_BOX.minFont).toBeGreaterThan(0)
+  })
+
+  it('每条身份标签都能在 ≥ minFont 的字号下放进卡片带宽', () => {
+    // 海报对身份标签走 fitFontSize：从 font 逐档降到 minFont。降到 minFont
+    // **仍然**放不下，就没有任何合法字号可用了 —— 那串字会顶穿烫金边框。
+    // 所以守卫按 minFont 算，而不是按「通常能过」的 font 算。
+    const tooWide = []
+    for (const { text } of identity) {
+      const w = defaultMeasure(text, IDENTITY_BOX.minFont)
+      if (w > IDENTITY_BOX.maxWidth) {
+        tooWide.push(
+          `"${text}" 在 ${IDENTITY_BOX.minFont}px 下宽 ${Math.ceil(w)}px，` +
+          `超过卡片带宽 ${IDENTITY_BOX.maxWidth}px`
+        )
+      }
+    }
+    expect(tooWide).toEqual([])
+  })
+
+  it('每条签辞都放得进签文卡的正文区', () => {
+    // 签辞首行画在卡片顶往下 verseOffset 处，宜/忌那行固定在卡片底往上 yiJiOffset 处，
+    // 中间就是签辞的全部活动空间。行数上限由这两个偏移推出，不写死「最多 2 行」。
+    const yiJiTop = FORTUNE_BOX.h - FORTUNE_LAYOUT.yiJiOffset - FORTUNE_LAYOUT.yiJiFont / 2
+    const maxLines = lineCapacity(FORTUNE_LAYOUT.verseOffset, yiJiTop, FORTUNE_LAYOUT.verseFont)
+    const over = []
+    for (const f of fortunes) {
+      const lines = wrapText(f.verse, FORTUNE_BOX.maxWidth, FORTUNE_LAYOUT.verseFont, defaultMeasure)
+      if (lines.length > maxLines) {
+        over.push(`"${f.verse}" 折成 ${lines.length} 行，超过上限 ${maxLines} 行（会压到宜/忌那行）`)
+      }
+    }
+    expect(over).toEqual([])
+  })
+
+  it('每支签的宜/忌行都放得进签文卡', () => {
+    // 与签辞同一类风险，同一张卡片：宜/忌也是折行绘制，多折一行就往下压，
+    // 越过卡片底边就画到卡外了。它同样只受 lint-rules 的 60 字上限约束。
+    const maxLines = lineCapacity(
+      FORTUNE_BOX.h - FORTUNE_LAYOUT.yiJiOffset, FORTUNE_BOX.h, FORTUNE_LAYOUT.yiJiFont
+    )
+    const over = []
+    for (const f of fortunes) {
+      const line = formatYiJi(f.yi, f.ji)
+      const lines = wrapText(line, FORTUNE_BOX.maxWidth, FORTUNE_LAYOUT.yiJiFont, defaultMeasure)
+      if (lines.length > maxLines) {
+        over.push(`"${line}" 折成 ${lines.length} 行，超过上限 ${maxLines} 行（会压出卡片底边）`)
+      }
+    }
+    expect(over).toEqual([])
   })
 })

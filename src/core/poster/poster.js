@@ -16,6 +16,29 @@ export function shouldUseJpeg(dataUrl, limit = PNG_LIMIT) {
 
 const FONT_STACK = '"PingFang SC", "HarmonyOS Sans", "Microsoft YaHei", sans-serif'
 
+/** 折行绘制的行距（相对字号）。导出是为了让内容守卫能据版式推算「最多几行」。 */
+export const LINE_HEIGHT = 1.5
+
+/**
+ * 签文卡内部的固定版式（偏移均相对卡片自身，不随卡片在画布上的位置变）。
+ *
+ * 抽成导出常量**不是为了可配置**，而是为了让 copyLibrary.test.js 能用同一组数字
+ * 推算「签辞最多放得下几行」。内容守卫一旦自带一套手抄的坐标，就会和这里漂移，
+ * 而漂移的方向恰恰是最坏的那种：测试说没事、海报上压字。
+ */
+export const FORTUNE_LAYOUT = {
+  levelOffset: 42,   // 签等（中吉/小凶）基线中心距卡片顶
+  verseOffset: 96,   // 签辞首行基线中心距卡片顶
+  verseFont: 24,
+  yiJiOffset: 44,    // 宜/忌行基线中心距卡片**底**
+  yiJiFont: 18
+}
+
+/** 宜/忌行的拼装。导出同上：测试要拿它算出与海报上完全一致的折行。 */
+export function formatYiJi(yi, ji) {
+  return `宜 ${yi}    忌 ${ji}`
+}
+
 /**
  * 组装海报上要画的全部文案。
  *
@@ -108,8 +131,16 @@ export function renderPoster({ reading, cfg, canvas, qrImage }) {
   ctx.strokeStyle = palette.cardLine
   ctx.lineWidth = 2
   ctx.stroke()
+  // 与姓名同一套测量驱动降档。这里**必须**降档，不能写死 idBox.font：
+  // 标签文案由运营直接改 copy/identity.json，而那边唯一的自动守卫只是
+  // lint-rules 的「单条 ≤ 60 字」—— 60 字的标签在 36px 下要 2160px，
+  // 写死字号就会顶穿烫金边框、横着画到画布上（验收页 ?debug=poster 第 10 张）。
+  // minFont 是配置里早就写明的下限，这里只是把它真正用起来。
+  const idFont = fitFontSize(vars.identity, idBox.maxWidth, {
+    max: idBox.font, min: idBox.minFont
+  }, (t, px) => measureWithCtx(ctx, t, px))
   ctx.fillStyle = palette[idBox.color] ?? idBox.color
-  ctx.font = `${idBox.font}px ${FONT_STACK}`
+  ctx.font = `${idFont}px ${FONT_STACK}`
   ctx.fillText(vars.identity, cx, idBox.y + idBox.h / 2)
 
   // 雷达图。⚠️ 传的是 dimLabels（「摸鱼指数」）而不是 'moYu'
@@ -129,10 +160,12 @@ export function renderPoster({ reading, cfg, canvas, qrImage }) {
   ctx.stroke()
   ctx.fillStyle = palette.gold
   ctx.font = `${fBox.font}px ${FONT_STACK}`
-  ctx.fillText(vars.fortuneLevel, cx, fBox.y + 42)
-  drawWrapped(ctx, vars.fortuneVerse, cx, fBox.y + 96, fBox.maxWidth, 24, palette.textMain)
-  drawWrapped(ctx, `宜 ${vars.fortuneYi}    忌 ${vars.fortuneJi}`, cx, fBox.y + fBox.h - 44,
-    fBox.maxWidth, 18, palette.textSub)
+  ctx.fillText(vars.fortuneLevel, cx, fBox.y + FORTUNE_LAYOUT.levelOffset)
+  drawWrapped(ctx, vars.fortuneVerse, cx, fBox.y + FORTUNE_LAYOUT.verseOffset, fBox.maxWidth,
+    FORTUNE_LAYOUT.verseFont, palette.textMain)
+  drawWrapped(ctx, formatYiJi(vars.fortuneYi, vars.fortuneJi), cx,
+    fBox.y + fBox.h - FORTUNE_LAYOUT.yiJiOffset, fBox.maxWidth, FORTUNE_LAYOUT.yiJiFont,
+    palette.textSub)
 
   // 二维码：画得比白卡小，用卡片留白补足静默区（原图白边只有约 2 个模块，规范要 4）
   const qBox = byKey.qrcode
@@ -176,6 +209,6 @@ function drawWrapped(ctx, text, cx, top, maxWidth, fontPx, color) {
   ctx.font = `${fontPx}px ${FONT_STACK}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  lines.forEach((l, i) => ctx.fillText(l, cx, top + i * (fontPx * 1.5)))
+  lines.forEach((l, i) => ctx.fillText(l, cx, top + i * (fontPx * LINE_HEIGHT)))
   return lines.length
 }
