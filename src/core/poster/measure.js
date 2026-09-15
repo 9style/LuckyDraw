@@ -68,6 +68,10 @@ export function wrapText(text, maxWidth, fontPx, measure = defaultMeasure) {
       line = ''
       continue
     }
+    // 行首不保留空格：line 为空时丢弃空格 token。
+    // 少了这一条，`line && …` 会在空行上短路走 else，把空格追加进空行 ——
+    // 产出「行首缩进」或纯空白行，直接违反本函数上面写明的约定。
+    if (token === ' ' && !line) continue
     if (line && measure(line + token, fontPx) > maxWidth) {
       lines.push(line)
       line = token === ' ' ? '' : token

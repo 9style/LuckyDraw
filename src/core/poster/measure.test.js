@@ -89,6 +89,31 @@ describe('wrapText', () => {
     }
   })
 
+  // 下面三条覆盖的是上面那条例不到的路径：行首空格只在 line 为空时才会被吃掉，
+  // 而 'abc def ghi' 的每个空格前都有词，永远走不到 —— 正是这个盲区让
+  // 「行首缩进 / 纯空白行」的缺陷在测试全绿的情况下活着。
+  it('开头的空格被丢弃，不留行首缩进', () => {
+    expect(wrapText('  张三', 620, 64)).toEqual(['张三'])
+    for (const l of wrapText('  张三', 620, 64)) {
+      expect(l === '' || !l.startsWith(' ')).toBe(true)
+    }
+  })
+
+  it('纯空白行不可能出现（空白会把行撑满并折出一个空行）', () => {
+    const lines = wrapText(' BDO ', 40, 32)
+    for (const l of lines) {
+      expect(l.trim() === '').toBe(false)
+      expect(l === '' || !l.startsWith(' ')).toBe(true)
+    }
+  })
+
+  it('换行符产生的新行也不以空格开头', () => {
+    const lines = wrapText('甲\n 乙', 200, 20)
+    for (const l of lines) {
+      expect(l === '' || !l.startsWith(' ')).toBe(true)
+    }
+  })
+
   it('空串返回空数组（而不是含一个空串的数组）', () => {
     expect(wrapText('', 100, 20, fakeMeasure)).toEqual([])
   })
