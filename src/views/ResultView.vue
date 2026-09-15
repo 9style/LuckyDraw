@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { runtimeConfig } from '../core/config.js'
 import { store, resetAll } from '../core/state.js'
 import ScoreRadar from '../components/ScoreRadar.vue'
@@ -7,11 +7,16 @@ import ScoreBars from '../components/ScoreBars.vue'
 import FortuneSlip from '../components/FortuneSlip.vue'
 import LuckyEggs from '../components/LuckyEggs.vue'
 import Disclaimer from '../components/Disclaimer.vue'
+import PosterModal from '../components/PosterModal.vue'
 
 const r = computed(() => store.reading)
 const dimLabels = runtimeConfig.scoring.dimensionLabels
 const bandMeta = runtimeConfig.scoring.bands
 const ui = runtimeConfig.copy.ui.result
+
+// ⚠️ 浮层必须**常驻挂载**，只切 open —— PosterModal 的锁滚动与绘制副作用挂在
+// `watch(open)` 上，用 v-if 让它「带 open=true 出生」会跳过一次 watch 回调。
+const posterOpen = ref(false)
 
 function again() {
   resetAll()
@@ -58,7 +63,12 @@ function again() {
       <LuckyEggs :lucky="r.lucky" :ui="ui" />
     </div>
 
-    <button class="btn-gold result__again" @click="again">{{ ui.again }}</button>
+    <div class="result__actions">
+      <button class="btn-gold" @click="posterOpen = true">{{ ui.savePoster }}</button>
+      <button class="btn-ghost" @click="again">{{ ui.again }}</button>
+    </div>
+
+    <PosterModal :open="posterOpen" @close="posterOpen = false" />
 
     <Disclaimer />
   </section>
@@ -88,5 +98,10 @@ function again() {
 .roasts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .roasts__item { font-size: 15px; line-height: 1.9; color: var(--text-sub); }
 .roasts__item::before { content: '· '; color: var(--gold); }
-.result__again { margin-top: 8px; align-self: center; }
+.result__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
 </style>

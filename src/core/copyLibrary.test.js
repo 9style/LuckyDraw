@@ -183,4 +183,18 @@ describe('ui.json', () => {
   it('动画文案为 3 步', () => {
     expect(ui.divining.steps).toHaveLength(3)
   })
+
+  it('海报相关文案齐备且非空', () => {
+    const keys = ['savePoster', 'posterHint', 'posterDownload', 'posterPending', 'posterFailed', 'copyLink']
+    for (const k of keys) {
+      expect(typeof ui.result[k], `ui.result.${k} 缺失`).toBe('string')
+      expect(ui.result[k].length, `ui.result.${k} 为空`).toBeGreaterThan(0)
+    }
+  })
+
+  it('海报段落含副标题、扫码引导与免责声明', () => {
+    expect(typeof ui.poster.subtitle).toBe('string')
+    expect(typeof ui.poster.scanHint).toBe('string')
+    expect(ui.poster.disclaimer.length).toBeGreaterThan(0)
+  })
 })

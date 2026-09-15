@@ -68,6 +68,15 @@ button {
   cursor: not-allowed;
 }
 
+/* 次级按钮：结果页底部「再算一次」用。与金色主按钮并排时不抢视线。 */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--card-line);
+  color: var(--text-sub);
+  padding: 0 1.6rem;
+  letter-spacing: 0.08em;
+}
+
 .gold-text {
   background: linear-gradient(135deg, var(--gold-bright), var(--gold), var(--gold-dim));
   -webkit-background-clip: text;

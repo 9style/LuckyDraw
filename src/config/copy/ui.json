@@ -22,7 +22,18 @@
     "luckyNumber": "幸运数字",
     "luckyDirection": "贵人方位",
     "luckyZodiac": "贵人星座",
-    "again": "再算一次"
+    "again": "再算一次",
+    "savePoster": "保 存 海 报",
+    "posterHint": "长按图片保存到相册",
+    "posterDownload": "下载图片",
+    "posterPending": "正在为你绘制海报…",
+    "posterFailed": "海报生成失败，结果页仍可正常查看",
+    "copyLink": "复制链接"
+  },
+  "poster": {
+    "subtitle": "打工人能量图鉴",
+    "scanHint": "扫码算你的职场运势",
+    "disclaimer": "本页面为纯娱乐互动，结果随机生成，不构成任何建议。所有信息仅在本地处理，不采集、不上传。"
   },
   "lock": {
     "gateTitle": "完整解读已生成",
