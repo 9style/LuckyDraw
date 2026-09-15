@@ -90,7 +90,11 @@ watch(
       document.body.style.overflow = ''
       window.removeEventListener('keydown', onKey)
     }
-  }
+  },
+  // immediate: true 是必需的，不是保险。模板按 prop **声明式**渲染浮层，
+  // 而副作用只挂在 watch 上 —— 少了它，「挂载时 open 已为 true」会画出浮层却不锁滚动、
+  // 也不触发绘制，永远停在 pending。初始值为 false 时只跑 else 分支，是幂等空操作。
+  { immediate: true }
 )
 
 onBeforeUnmount(() => {
