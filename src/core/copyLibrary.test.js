@@ -10,8 +10,9 @@ import lucky from '../config/copy/lucky.json'
 import ui from '../config/copy/ui.json'
 import rules from '../config/lint-rules.json'
 import posterCfg from '../config/poster.json'
+import scoringCfg from '../config/scoring.json'
 import { ZODIACS, TENURES } from './config.js'
-import { defaultMeasure, wrapText } from './poster/measure.js'
+import { defaultMeasure, wrapText, fitFontSize } from './poster/measure.js'
 import { FORTUNE_LAYOUT, LINE_HEIGHT, formatYiJi } from './poster/poster.js'
 
 const DEPT_KEYS = ['tech', 'product', 'market', 'ops', 'admin', 'other']
@@ -237,6 +238,37 @@ describe('海报版式容量（内容必须装得进版式）', () => {
       .toBeGreaterThan(0)
     expect(IDENTITY_BOX.maxWidth).toBeGreaterThan(0)
     expect(IDENTITY_BOX.minFont).toBeGreaterThan(0)
+  })
+
+  it('四维数值行放得进 scoreRow 带宽', () => {
+    // 为什么这一条和身份标签一样，守的是**下限**而不是声明字号：
+    // 海报对 scoreRow 走 fitFontSize（与 name / identity 同一套规则）—— 声明的 font 是
+    // **上限**，minFont 是**下限**。在声明字号下量得 740px > 带宽 620px 是当前配置的
+    // 既成事实（四个维度都到三位数时可达），绘图侧靠降档消化掉；若把守卫也钉在声明
+    // 字号上，它就变成了「要求把 font 调到 16」，那是让**每一张**海报都为一个罕见输入
+    // 缩小字号，而不是只在装不下时降档。所以守卫钉下限：降到 minFont 仍放不下，
+    // 才意味着没有任何合法字号可用 —— 那行字会横穿整张画布。
+    //
+    // ⚠️ 四维数值行是全项目唯一**三重失守**的文案：标签来自 `scoring.json`，
+    // 而 lint-copy.js 只扫 `copy/*.json`、`settings.json`、`.vue` 与非测试 `.js` ——
+    // `scoring.json` 整个文件不在扫描面内。所以 `dimensionLabels` 既没有禁用词检查、
+    // 也没有 60 字上限检查，更没有容量检查。这条守卫补上第三项。
+    const SCORE_BOX = boxOf('scoreRow')
+    // 最坏情况：四个维度全部三位数。100 不是假想值 —— taurus(90) + gt5(+8) + tech(+6) = 104，
+    // 由 scoring.js 夹到 100，验收页 ?debug=poster 的「满分」那张画的就是它。
+    const row = DIMS.map((d) => `${scoringCfg.dimensionLabels[d]} 100`).join('  ·  ')
+    const font = fitFontSize(row, SCORE_BOX.maxWidth, {
+      max: SCORE_BOX.font, min: SCORE_BOX.minFont
+    }, defaultMeasure)
+
+    const w = defaultMeasure(row, font)
+    expect(w, `"${row}" 降档到 ${font}px 后宽 ${Math.ceil(w)}px，超过带宽 ${SCORE_BOX.maxWidth}px`)
+      .toBeLessThanOrEqual(SCORE_BOX.maxWidth)
+
+    // 降档还必须留有余量：真的顶到 minFont，说明带宽一点富余都没有了，
+    // 再长一个字就是上面那条断言报错。让「标签开始变长」在这里先被看见。
+    expect(font, `最坏行已降到 minFont(${SCORE_BOX.minFont}px)，带宽 ${SCORE_BOX.maxWidth}px 没有余量`)
+      .toBeGreaterThan(SCORE_BOX.minFont)
   })
 
   it('每条身份标签都能在 ≥ minFont 的字号下放进卡片带宽', () => {

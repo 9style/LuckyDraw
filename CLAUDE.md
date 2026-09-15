@@ -73,7 +73,10 @@ IntroView ──start──▶ FormView ──submitted──▶ DivinationView 
 `fortune.js` 的 `FALLBACK_FORTUNE`（空签池兜底，纯函数拿不到整个 config）、
 `FormView.vue`（整屏静态标签「报上名来」「入职多久了」等都是就地硬编码的）。
 这三处都在 `lint-copy.js` 的扫描面内（`.vue` 全文 + `src/` 下的非测试 `.js`），
-所以硬编码不等于免责 —— 照样过禁用词与长度检查。
+所以硬编码不等于免责 —— 照样过**禁用词**检查（剥注释、去空白后匹配）。
+但**长度不查**：60 字上限住在 `lintText` 里，只作用于 JSON 文案；
+硬编码的 `.vue`/`.js` 文案没有任何长度守卫（`lintSource` 只匹配禁用词）。
+所以往组件里塞长句时，「没过 lint 就是没问题」这个推断是不成立的。
 
 `copyEngine.interpolate` 用 `{key}` 占位替换，vars 由 `buildReading` 组装（`name/dept/zodiac/tenure`）。
 未知 key 原样保留，方便运营发现拼写错误。
@@ -204,5 +207,12 @@ profile.deptText = '搞算法的'     ← 用户原文，**只用于结果页展
   —— 仓库事实上已是 git 仓库且已有 `.gitignore`。涉及 git 的操作先与用户确认。
 - 「例外：`工位风水` 允许」—— 见上文合规闸门一节。
 - Task 18 记录的状态是「不可上线」（占位符未填），且当时的 `dist/` 是绕过闸门构建的。
-- 海报 / 口令解锁 / 锁定蒙层属于**计划二**，尚未编写也尚未实现（树里没有 `poster.json`、`PosterView`、`PasscodeGate`、`LockedMask`）。
+- **口令解锁 / 锁定蒙层**属于**计划二**，尚未编写也尚未实现（树里没有 `PasscodeGate`、`LockedMask`）。
   `poster` 不是阶段，`unlocked` 是独立的布尔量，不是 `store.stage` 的取值。
+- **海报已是实现**（计划二的第一部分，分支 `feat/share-poster`）：`src/config/poster.json`（版式与配色）、
+  `src/core/poster/*`（`measure` 测量与降档 / `layout` 元素流 / `draw` canvas 原语 / `poster` 编排与导出 /
+  `clipboard` 复制降级）、`src/components/PosterModal.vue`（结果页浮层、长按或下载）、
+  `src/views/DebugPoster.vue`（`?debug=poster`，仅 dev 的视觉验收页）。
+  海报画布 750×1334，导出 PNG、超 1.2MB 转 JPEG。
+  ⚠️ 海报文案的容量由 `copyLibrary.test.js` 的「海报版式容量」一节守卫：
+  改 `copy/identity.json`、`copy/fortunes.json` 或 `scoring.json#dimensionLabels` 都可能让内容装不进版式。

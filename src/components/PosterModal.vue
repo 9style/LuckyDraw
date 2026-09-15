@@ -12,6 +12,10 @@ const emit = defineEmits(['close'])
 const ui = runtimeConfig.copy.ui.result
 const phase = ref('pending')   // pending | ready | failed | manual
 const dataURL = ref('')
+// 后缀必须跟着 renderPoster 返回的 format 走，不能写死：超过 1.2MB 时它会改用 JPEG，
+// 而下载行为只看后缀 —— 写死 .png 会得到一个「叫 png、内容却是 JPEG 字节」的文件，
+// 系统按 PNG 解码失败。桌面用户一旦跨过 1.2MB 阈值就会踩到。
+const format = ref('png')
 
 // 微信内置浏览器无法用 JS 写相册，只能引导长按；其余环境给下载按钮。
 const isWeChat = /MicroMessenger/i.test(navigator.userAgent)
@@ -37,6 +41,7 @@ function loadQr() {
 async function generate() {
   phase.value = 'pending'
   dataURL.value = ''
+  format.value = 'png'
   try {
     const canvas = document.createElement('canvas')
     const qrImage = await loadQr()
@@ -47,6 +52,7 @@ async function generate() {
       qrImage
     })
     dataURL.value = result.dataURL
+    format.value = result.format
     phase.value = 'ready'
   } catch {
     // 兜底态是一个完整可读的结果页，不是错误提示 —— 结果页从未被替换掉，
@@ -59,7 +65,7 @@ async function generate() {
 function download() {
   const a = document.createElement('a')
   a.href = dataURL.value
-  a.download = `职场运势-${store.reading?.vars?.name ?? ''}.png`
+  a.download = `职场运势-${store.reading?.vars?.name ?? ''}.${format.value}`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

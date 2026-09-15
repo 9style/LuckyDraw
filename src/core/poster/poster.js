@@ -148,8 +148,16 @@ export function renderPoster({ reading, cfg, canvas, qrImage }) {
   drawRadar(ctx, cx, radarBox.y + radarBox.h / 2, radarBox.h / 2 - 30,
     dimValues, dimLabels, palette)
 
-  // 四维数值行 / 签文 / 二维码 / 引导 / 免责
-  drawCenter(vars.scoreRow, byKey.scoreRow, byKey.scoreRow.font, byKey.scoreRow.color)
+  // 四维数值行。与姓名、身份标签同一套测量驱动降档 —— 这一行同样**必须**降档：
+  // 四个维度都到三位数是可达的（taurus(90) + gt5(+8) + tech(+6) = 104，被 scoring.js 夹到 100），
+  // 而按项目的估算器 defaultMeasure 量，这一行在 20px 下宽 740px、带宽只有 620px。
+  // 真机 ctx 的字宽是**设备相关**的（本机 Chrome 量出 490px，估算器给 740px），所以
+  // 不能赌「哪台设备装得下」：装不下就降一档，装得下就原样画，不预先缩小任何设备上的字号。
+  const scoreBox = byKey.scoreRow
+  const scoreFont = fitFontSize(vars.scoreRow, scoreBox.maxWidth, {
+    max: scoreBox.font, min: scoreBox.minFont
+  }, (t, px) => measureWithCtx(ctx, t, px))
+  drawCenter(vars.scoreRow, scoreBox, scoreFont, scoreBox.color)
 
   const fBox = byKey.fortune
   roundRect(ctx, cx - fBox.maxWidth / 2, fBox.y, fBox.maxWidth, fBox.h, 16)
