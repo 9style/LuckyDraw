@@ -213,6 +213,23 @@ describe('buildReading', () => {
     expect(r.vars.tenure).toBeTruthy()
   })
 
+  // 部门改成自由输入后，展示用原文（「搞算法的」）、算分用归一的 key（tech）。
+  // 回退分支不是可选项：改版前存下的会话里没有 deptText，刷新后仍要能渲染出部门名。
+  it('有 deptText 时 vars.dept 用原文，无则回退规范名', () => {
+    const withText = buildReading({ ...profile, deptText: '搞算法的' }, cfg, makeRng(1))
+    expect(withText.vars.dept).toBe('搞算法的')
+
+    const without = buildReading(profile, cfg, makeRng(1))
+    expect(without.vars.dept).toBe('技术 / 研发')
+  })
+
+  it('deptText 不影响打分：仍按归一的 dept 算', () => {
+    const plain = buildReading(profile, cfg, makeRng(7))
+    const texted = buildReading({ ...profile, deptText: '搞算法的' }, cfg, makeRng(7))
+    expect(texted.scores).toEqual(plain.scores)
+    expect(texted.bands).toEqual(plain.bands)
+  })
+
   it('相同种子产出完全一致', () => {
     const a = buildReading(profile, cfg, makeRng(555))
     const b = buildReading(profile, cfg, makeRng(555))

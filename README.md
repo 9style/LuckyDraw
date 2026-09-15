@@ -11,7 +11,7 @@ Vue 3 + Vite。**无后端、无路由、无状态库、无 UI 组件库、无�
 ```bash
 npm install
 npm run dev      # 开发服务器
-npm test         # 172 条单元测试
+npm test         # 单元测试
 npm run simulate # 打印四维分数的等级带分布（调权重时用）
 npm run build    # 构建（前置合规检查）
 ```

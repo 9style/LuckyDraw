@@ -65,6 +65,12 @@ export function checkConfigConsistency() {
   for (const k of deptKeys) {
     if (!bonusKeys.includes(k)) problems.push(`scoring.deptBonus 缺少部门 "${k}"`)
     if (!copy.department[k]) problems.push(`copy/department.json 缺少部门 "${k}"`)
+    // keywords 是「自由输入 → 6 大类」的唯一依据。某个大类关键词表空了，
+    // 该类就再也匹配不上任何人 —— 用户全被兜到 other，该部门专属的吐槽与身份
+    // 标签永远不会出现。属于静默失效（页面正常、只是内容永远不对），必须拦。
+    if (!Array.isArray(departments[k]?.keywords) || departments[k].keywords.length === 0) {
+      problems.push(`departments.json 的部门 "${k}" 缺少非空 keywords，该类将永远匹配不上`)
+    }
   }
   for (const k of bonusKeys) {
     if (!deptKeys.includes(k)) problems.push(`departments.json 缺少部门 "${k}"`)
@@ -79,6 +85,53 @@ export function checkConfigConsistency() {
     if (!copy.scores[dim]) problems.push(`copy/scores.json 缺少维度 "${dim}"`)
   }
   return problems
+}
+
+/** 归一化：只保留汉字（含 CJK 扩展 A，同 validators.js 的取法）与 ASCII 字母数字，转小写。 */
+const DEPT_NORM_RE = /[^㐀-䶿一-鿿a-z0-9]/g
+
+/**
+ * 把用户手打的部门文字归到 6 大类之一，返回大类 key（兜底 `'other'`）。
+ *
+ * 为什么需要它：部门输入框从下拉框改成了自由文本（用户会打「搞算法的」「大区销售」），
+ * 而下游三处——`scoring.deptBonus`、`copy/department.json`、`copy/identity.json`
+ * 的部门专属标签——都只认 6 个 key。**匹配只在提交那一刻做一次**，把结果存进
+ * `profile.dept`，`profile.deptText` 另存原文供展示。这样下游一行都不用改，
+ * `BIAS_TIERS` 的标定也不会因为部门退出打分而失效。
+ *
+ * 匹配规则：
+ *  1. 归一化 —— 去掉全部空白与标点并转小写，所以「技术 / 研发」「技术/研发」
+ *     乃至「i t」都能对齐到同一串。关键词也走同一套归一化，两边对称。
+ *  2. **最长命中优先**，而不是按配置顺序取第一个命中的：'产品运营' 同时含
+ *     「产品」(product) 与「运营」(ops)，应当由更具体的关键词决出胜者。
+ *  3. 等长命中时保留先遍历到的（配置顺序），保证同一输入永远给同一答案。
+ *  4. 全不命中、空值、关键词表缺失 —— 一律兜底 `'other'`，绝不抛异常。
+ *     输入框是自由文本，什么奇怪东西都可能进来。
+ */
+export function matchDept(text, deptConfig = runtimeConfig.departments) {
+  const input = normalizeDept(text)
+  if (!input) return 'other'
+
+  let bestKey = 'other'
+  let bestLen = 0
+  for (const [key, dept] of Object.entries(deptConfig ?? {})) {
+    const keywords = Array.isArray(dept?.keywords) ? dept.keywords : []
+    for (const raw of keywords) {
+      const kw = normalizeDept(raw)
+      // 严格大于：等长时不动，先遍历到的胜出
+      if (kw && kw.length > bestLen && input.includes(kw)) {
+        bestKey = key
+        bestLen = kw.length
+      }
+    }
+  }
+  return bestKey
+}
+
+function normalizeDept(text) {
+  return String(text ?? '')
+    .toLowerCase()
+    .replace(DEPT_NORM_RE, '')
 }
 
 /**

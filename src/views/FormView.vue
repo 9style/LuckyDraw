@@ -1,15 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { runtimeConfig } from '../core/config.js'
-import { validateProfile } from '../core/validators.js'
+import { runtimeConfig, matchDept } from '../core/config.js'
+import { validateProfile, NAME_MAX, DEPT_MAX } from '../core/validators.js'
 import { setProfile } from '../core/state.js'
 
 const emit = defineEmits(['submitted'])
-
-const deptList = Object.entries(runtimeConfig.departments).map(([key, v]) => ({
-  key,
-  label: v.label
-}))
 
 const form = ref({
   name: '',
@@ -31,9 +26,15 @@ function blur(field) {
 function onSubmit() {
   submitted.value = true
   if (!validation.value.ok) return
+  const name = form.value.name.trim()
+  // 部门是自由输入，在这里**一次性**归到 6 大类：下游（deptBonus 打分、
+  // copy/department 吐槽池、copy/identity 部门专属标签）只认 key，一行都不用改。
+  // 用户原文另存 deptText，只用于结果页展示。
+  const deptText = form.value.dept.trim()
   setProfile({
-    name: form.value.name.trim(),
-    dept: form.value.dept,
+    name,
+    dept: matchDept(deptText, runtimeConfig.departments),
+    deptText,
     tenure: form.value.tenure,
     zodiac: form.value.zodiac
   })
@@ -51,7 +52,7 @@ function onSubmit() {
         id="f-name"
         v-model="form.name"
         type="text"
-        maxlength="8"
+        :maxlength="NAME_MAX"
         placeholder="怎么称呼你"
         autocomplete="off"
         @blur="blur('name')"
@@ -62,10 +63,16 @@ function onSubmit() {
 
     <div class="field">
       <label for="f-dept">部门</label>
-      <select id="f-dept" v-model="form.dept" @blur="blur('dept')" @change="blur('dept')">
-        <option value="" disabled>选一个</option>
-        <option v-for="d in deptList" :key="d.key" :value="d.key">{{ d.label }}</option>
-      </select>
+      <input
+        id="f-dept"
+        v-model="form.dept"
+        type="text"
+        :maxlength="DEPT_MAX"
+        placeholder="比如：技术 / 研发"
+        autocomplete="off"
+        @blur="blur('dept')"
+        @keyup.enter="onSubmit"
+      />
       <p v-if="errors.dept" class="field__err">{{ errors.dept }}</p>
     </div>
 
@@ -114,6 +121,9 @@ function onSubmit() {
 .form__title { margin: 0 0 6px; font-size: 26px; letter-spacing: 0.12em; text-align: center; }
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field label { font-size: 14px; color: var(--text-sub); }
+/* 名字与部门都是 <input>；星座仍是 <select>（本次只把部门改成自由输入，
+   星座继续用下拉框）。三者共用同一套控件外观，所以选择器必须同时覆盖
+   input 与 select —— 只写 .field input 会让星座掉回原生白底样式。 */
 .field input,
 .field select {
   min-height: var(--tap);
@@ -132,7 +142,8 @@ function onSubmit() {
    改用平台主题绘制关闭态文字 —— 在深色背景上就是一行几乎看不见的灰字。
    appearance: none 才让上面的 color 真正生效。
    代价是浏览器不再画下拉箭头，所以紧接着用内联 SVG 自绘一个，
-   免得去掉原生外观后丢掉"这里可以点开"的提示。 */
+   免得去掉原生外观后丢掉"这里可以点开"的提示。
+   （部门改成自由输入后，这段只剩星座一个消费方，但仍然必需。） */
 .field select {
   appearance: none;
   -webkit-appearance: none;

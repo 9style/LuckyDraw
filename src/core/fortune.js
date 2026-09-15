@@ -131,7 +131,10 @@ export function buildReading(profile, cfg, rng) {
     // 值为 undefined 时会**原样渲染出字面量 "undefined"**（其余三个变量本就有 ?? ''，
     // 唯独 name 没有）。未走校验的调用路径会打印出「undefined 今天宜早退」。
     name: profile.name ?? '',
-    dept: cfg.departments[profile.dept]?.label ?? '',
+    // 部门显示用户手打的原文（「搞算法的」），而不是归一后的规范名（「技术 / 研发」）。
+    // 回退分支不是可选项：deptText 是本轮才加的字段，改版前存下的会话里没有它，
+    // 刷新恢复后仍得渲染出一个部门名 —— 那时退回规范名。
+    dept: profile.deptText || cfg.departments[profile.dept]?.label || '',
     zodiac: cfg.zodiacLabels[profile.zodiac] ?? '',
     tenure: cfg.tenureLabels[profile.tenure] ?? ''
   }

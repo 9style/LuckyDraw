@@ -1,6 +1,6 @@
 // src/core/validators.test.js
 import { describe, it, expect } from 'vitest'
-import { validateName, validateProfile, NAME_MAX } from './validators.js'
+import { validateName, validateDept, validateProfile, NAME_MAX, DEPT_MAX } from './validators.js'
 
 const cfg = {
   departments: { tech: { label: '技术/研发' }, other: { label: '其他' } },
@@ -76,6 +76,62 @@ describe('validateName', () => {
   })
 })
 
+describe('validateDept', () => {
+  it('拒绝空串与纯空格', () => {
+    expect(validateDept('').ok).toBe(false)
+    expect(validateDept('   ').ok).toBe(false)
+    expect(validateDept(null).ok).toBe(false)
+    expect(validateDept(undefined).ok).toBe(false)
+  })
+
+  // ⚠️ 这条是本模块从下拉框改成自由输入后最容易踩的坑：
+  // 6 个规范名里有 3 个自带斜杠（「技术 / 研发」），直接复用 NAME_RE 会把自己人拒掉。
+  it('接受带斜杠与空格的规范名', () => {
+    expect(validateDept('技术 / 研发').ok).toBe(true)
+    expect(validateDept('人力 / 行政 / 财务').ok).toBe(true)
+    expect(validateDept('技术/研发').ok).toBe(true)
+  })
+
+  it('接受口语化自由文本', () => {
+    expect(validateDept('搞算法的').ok).toBe(true)
+    expect(validateDept('大区销售').ok).toBe(true)
+    expect(validateDept('IT').ok).toBe(true)
+  })
+
+  it(`接受 ${DEPT_MAX} 个字，拒绝 ${DEPT_MAX + 1} 个字`, () => {
+    const max = '部'.repeat(DEPT_MAX)
+    expect([...max]).toHaveLength(DEPT_MAX)
+    expect(validateDept(max).ok).toBe(true)
+
+    const over = '部'.repeat(DEPT_MAX + 1)
+    const r = validateDept(over)
+    expect(r.ok).toBe(false)
+    expect(r.error).toContain(String(DEPT_MAX))
+  })
+
+  it('拒绝 HTML 相关字符（必须由正则拦截，而非长度）', () => {
+    // 与 validateName 同理：载荷要短到必然走正则分支，否则测的是长度而不是正则
+    for (const payload of ['a<b', 'a>b', 'a"b', "a'b", 'a&b', 'a=b', 'a`b', 'a＜b']) {
+      expect([...payload].length).toBeLessThanOrEqual(DEPT_MAX)
+      expect(validateDept(payload).ok, `未拦截 ${payload}`).toBe(false)
+    }
+  })
+
+  it('接受 CJK 扩展 A 汉字', () => {
+    expect(validateDept('䶮组').ok).toBe(true)
+  })
+
+  it('拒绝 emoji', () => {
+    expect(validateDept('技术😀').ok).toBe(false)
+  })
+
+  it('去除首尾空格后返回清洗值', () => {
+    const r = validateDept('  技术 / 研发  ')
+    expect(r.ok).toBe(true)
+    expect(r.value).toBe('技术 / 研发')
+  })
+})
+
 describe('validateProfile', () => {
   const good = { name: '张三', dept: 'tech', tenure: '1to3', zodiac: 'aries' }
 
@@ -89,8 +145,15 @@ describe('validateProfile', () => {
     expect(r.errors.dept).toBeTruthy()
   })
 
-  it('部门不在枚举内时报错', () => {
-    const r = validateProfile({ ...good, dept: 'not_a_dept' }, cfg)
+  // 语义反转：部门既然改成自由输入，就不再受 6 大类枚举约束。
+  // 任意合规文字都该放行，由 matchDept 在提交时归到某个大类（兜底 other）。
+  it('部门不再受枚举约束：任意合规自由文本都通过', () => {
+    expect(validateProfile({ ...good, dept: '搞算法的' }, cfg).ok).toBe(true)
+    expect(validateProfile({ ...good, dept: '不是六个大类之一' }, cfg).ok).toBe(true)
+  })
+
+  it('部门含非法字符时报错', () => {
+    const r = validateProfile({ ...good, dept: '<b>x</b>' }, cfg)
     expect(r.ok).toBe(false)
     expect(r.errors.dept).toBeTruthy()
   })
@@ -114,7 +177,8 @@ describe('validateProfile', () => {
   })
 
   it('全部非法时四项都有错误', () => {
-    const r = validateProfile({ name: '', dept: 'x', tenure: 'x', zodiac: 'x' }, cfg)
+    // dept 必须是空串或含非法字符 —— 单纯的 'x' 现在是合法部门了
+    const r = validateProfile({ name: '', dept: '', tenure: 'x', zodiac: 'x' }, cfg)
     expect(r.ok).toBe(false)
     expect(Object.keys(r.errors).sort()).toEqual(['dept', 'name', 'tenure', 'zodiac'])
   })

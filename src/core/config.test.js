@@ -1,6 +1,6 @@
 // src/core/config.test.js
 import { describe, it, expect } from 'vitest'
-import { runtimeConfig, checkConfigConsistency, isPlaceholder } from './config.js'
+import { runtimeConfig, checkConfigConsistency, isPlaceholder, matchDept } from './config.js'
 
 const DEPT_KEYS = ['tech', 'product', 'market', 'ops', 'admin', 'other']
 const DIMS = ['moYu', 'shengZhi', 'renMai', 'caiYun']
@@ -69,6 +69,29 @@ describe('scoring.json 约束', () => {
     }
   })
 
+  // 部门从下拉框改成自由输入后，keywords 成为「把用户输入归到 6 大类」的唯一依据。
+  // 某个大类关键词表空了，该类就再也匹配不上任何人 —— 用户全被兜到 other，
+  // 该部门专属的吐槽与身份标签永远不会出现。属于静默失效，必须钉住。
+  it('每个大类都有非空的关键词表', () => {
+    for (const k of DEPT_KEYS) {
+      const kw = runtimeConfig.departments[k].keywords
+      expect(Array.isArray(kw), `${k} 的 keywords 不是数组`).toBe(true)
+      expect(kw.length, `${k} 的关键词表为空`).toBeGreaterThan(0)
+      for (const w of kw) expect(typeof w, `${k} 含非字符串关键词`).toBe('string')
+    }
+  })
+
+  it('关键词不跨部门重复（否则匹配结果取决于遍历顺序）', () => {
+    const seen = new Map()
+    for (const k of DEPT_KEYS) {
+      for (const w of runtimeConfig.departments[k].keywords) {
+        const key = String(w).toLowerCase()
+        expect(seen.has(key), `关键词「${w}」同时出现在 ${seen.get(key)} 与 ${k}`).toBe(false)
+        seen.set(key, k)
+      }
+    }
+  })
+
   it('等级带为四档且上界覆盖到 100', () => {
     expect(bands.map((b) => b.key)).toEqual(['wei', 'ping', 'ji', 'daji'])
     expect(Math.max(...bands.map((b) => b.max))).toBe(100)
@@ -78,6 +101,64 @@ describe('scoring.json 约束', () => {
 describe('checkConfigConsistency', () => {
   it('当前配置无缺失，返回空数组', () => {
     expect(checkConfigConsistency()).toEqual([])
+  })
+})
+
+describe('matchDept：自由输入 → 6 大类', () => {
+  const D = runtimeConfig.departments
+
+  it('规范名能命中自己', () => {
+    expect(matchDept('技术 / 研发', D)).toBe('tech')
+    expect(matchDept('产品 / 设计', D)).toBe('product')
+    expect(matchDept('人力 / 行政 / 财务', D)).toBe('admin')
+  })
+
+  it('口语化输入命中对应大类', () => {
+    expect(matchDept('搞算法的', D)).toBe('tech')
+    expect(matchDept('大区销售', D)).toBe('market')
+    expect(matchDept('客服', D)).toBe('ops')
+  })
+
+  it('忽略大小写、空白与标点', () => {
+    expect(matchDept('IT', D)).toBe('tech')
+    expect(matchDept(' i t ', D)).toBe('tech')
+    expect(matchDept('技术/研发', D)).toBe('tech')
+  })
+
+  // 若实现写成「按配置顺序取第一个命中的」，'产品运营' 会被 a 抢走 ——
+  // 而用户说的显然是 b。这条专门钉住「最长命中优先」。
+  it('最长命中优先，而非配置顺序', () => {
+    const fixture = {
+      a: { label: 'A', keywords: ['运营'] },
+      b: { label: 'B', keywords: ['产品运营'] }
+    }
+    expect(matchDept('产品运营', fixture)).toBe('b')
+  })
+
+  it('等长命中时按配置顺序取先者，结果确定', () => {
+    const fixture = {
+      a: { label: 'A', keywords: ['产品'] },
+      b: { label: 'B', keywords: ['运营'] }
+    }
+    expect(matchDept('产品运营', fixture)).toBe('a')
+    // 同样的输入必须永远给同一个答案
+    expect(matchDept('产品运营', fixture)).toBe(matchDept('产品运营', fixture))
+  })
+
+  it('全不命中兜底到 other', () => {
+    expect(matchDept('打酱油的', D)).toBe('other')
+  })
+
+  it('空值兜底到 other，不抛异常', () => {
+    expect(matchDept('', D)).toBe('other')
+    expect(matchDept('   ', D)).toBe('other')
+    expect(matchDept(null, D)).toBe('other')
+    expect(matchDept(undefined, D)).toBe('other')
+  })
+
+  it('关键词表缺失时兜底 other，不抛异常', () => {
+    expect(matchDept('技术', { tech: { label: '技术' } })).toBe('other')
+    expect(matchDept('技术', {})).toBe('other')
   })
 })
 

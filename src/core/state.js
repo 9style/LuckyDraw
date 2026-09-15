@@ -77,7 +77,13 @@ function isPlainObject(v) {
 }
 
 function isUsableProfile(profile) {
-  return isPlainObject(profile) && PROFILE_KEYS.every((k) => typeof profile[k] === 'string')
+  if (!isPlainObject(profile)) return false
+  if (!PROFILE_KEYS.every((k) => typeof profile[k] === 'string')) return false
+  // deptText 是本轮才加的展示字段（用户手打的部门原文），因此**按可选处理**：
+  // 改版前存下的会话里没有它，刷新后仍要能恢复，那时 ResultView 退回规范名渲染。
+  // 但一旦它存在，就必须是字符串 —— 否则 vars.dept 会渲染出个对象。
+  if ('deptText' in profile && typeof profile.deptText !== 'string') return false
+  return true
 }
 
 function isUsableReading(reading) {
