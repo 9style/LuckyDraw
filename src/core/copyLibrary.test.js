@@ -10,10 +10,9 @@ import lucky from '../config/copy/lucky.json'
 import ui from '../config/copy/ui.json'
 import rules from '../config/lint-rules.json'
 import posterCfg from '../config/poster.json'
-import scoringCfg from '../config/scoring.json'
-import { ZODIACS, TENURES } from './config.js'
+import { ZODIACS, TENURES, runtimeConfig } from './config.js'
 import { defaultMeasure, wrapText, fitFontSize } from './poster/measure.js'
-import { FORTUNE_LAYOUT, LINE_HEIGHT, formatYiJi } from './poster/poster.js'
+import { FORTUNE_LAYOUT, LINE_HEIGHT, formatYiJi, formatScoreRow } from './poster/poster.js'
 
 const DEPT_KEYS = ['tech', 'product', 'market', 'ops', 'admin', 'other']
 const DIMS = ['moYu', 'shengZhi', 'renMai', 'caiYun']
@@ -256,7 +255,15 @@ describe('海报版式容量（内容必须装得进版式）', () => {
     const SCORE_BOX = boxOf('scoreRow')
     // 最坏情况：四个维度全部三位数。100 不是假想值 —— taurus(90) + gt5(+8) + tech(+6) = 104，
     // 由 scoring.js 夹到 100，验收页 ?debug=poster 的「满分」那张画的就是它。
-    const row = DIMS.map((d) => `${scoringCfg.dimensionLabels[d]} 100`).join('  ·  ')
+    //
+    // ⚠️ 用与海报**同一个** formatScoreRow 拼这行，一个字都不手抄。手抄的拼接会在
+    // 实现改分隔符、改维度顺序、改兜底值时静默漂移 —— 守卫会对着一个海报上根本
+    // 不存在的字符串量出「装得下」，而真正的海报上那行字正横穿画布。
+    // 维度也从 runtimeConfig 取，这样加维度时这一条自动跟着扩展。
+    const row = formatScoreRow(
+      Object.fromEntries(runtimeConfig.scoring.dimensions.map((d) => [d, 100])),
+      runtimeConfig
+    )
     const font = fitFontSize(row, SCORE_BOX.maxWidth, {
       max: SCORE_BOX.font, min: SCORE_BOX.minFont
     }, defaultMeasure)

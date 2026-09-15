@@ -12,7 +12,7 @@ Vue 3 + Vite，**无后端、无路由、无状态库、无 UI 组件库、无�
 ```bash
 npm install
 npm run dev              # Vite 开发服务器
-npm test                 # 全量单测（vitest run，10 个文件）
+npm test                 # 全量单测（vitest run，15 个文件）
 npm run test:watch       # 监听模式
 npx vitest run src/core/fortune.test.js    # 单个测试文件
 npx vitest run -t "文案"                    # 按用例名筛选
@@ -214,5 +214,9 @@ profile.deptText = '搞算法的'     ← 用户原文，**只用于结果页展
   `clipboard` 复制降级）、`src/components/PosterModal.vue`（结果页浮层、长按或下载）、
   `src/views/DebugPoster.vue`（`?debug=poster`，仅 dev 的视觉验收页）。
   海报画布 750×1334，导出 PNG、超 1.2MB 转 JPEG。
-  ⚠️ 海报文案的容量由 `copyLibrary.test.js` 的「海报版式容量」一节守卫：
-  改 `copy/identity.json`、`copy/fortunes.json` 或 `scoring.json#dimensionLabels` 都可能让内容装不进版式。
+  ⚠️ 海报文案的**容量**由 `copyLibrary.test.js` 的「海报版式容量」一节守卫：改 `copy/identity.json`、
+  `copy/fortunes.json` 或 `scoring.json#dimensionLabels` 可能让内容装不进版式，改错了当场报错。
+  但这条守卫**只管这三处**。`copy/ui.json#poster.*`（subtitle / scanHint / disclaimer）与
+  `settings.json#displayTitle` 是画在版式上、却没有任何容量断言的裸奔文案 —— 它们按声明字号直绘、
+  不降档，免责声明折行也没有行数上限。往这几处塞长句，测试不会红，海报上会压字。
+  （`name` 不在其中：`validators.js#NAME_MAX = 8` 已在输入口封顶，8 个全角字在声明字号下 512px < 620px 带宽。）

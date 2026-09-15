@@ -40,6 +40,22 @@ export function formatYiJi(yi, ji) {
 }
 
 /**
+ * 四维数值行的拼装（`摸鱼指数 73  ·  升值指数 78  ·  …`）。导出同上。
+ *
+ * 理由比上面两个更强：这一行是全项目唯一**三重失守**的文案（标签来自 `scoring.json`，
+ * 而 `scoring.json` 不在 lint-copy.js 的扫描面内），容量守卫是它唯一的自动防线。
+ * 守卫要是自己手抄一份 `${label} ${score}` 的拼接，那么这里改分隔符、改顺序、
+ * 改兜底值时守卫都不会跟着动 —— 它会对着一个海报上根本不存在的字符串算出「装得下」，
+ * 而真正的海报上那行字正横穿画布。测试与实现必须是同一个函数。
+ */
+export function formatScoreRow(scores, cfg) {
+  const dims = cfg.scoring.dimensions
+  const labels = cfg.scoring.dimensionLabels
+  const s = scores ?? {}
+  return dims.map((d) => `${labels[d] ?? ''} ${s[d] ?? 0}`).join('  ·  ')
+}
+
+/**
  * 组装海报上要画的全部文案。
  *
  * ⚠️ 一律从**冻结的 reading** 取，不重算任何东西 —— 海报上的分数与签文
@@ -47,12 +63,9 @@ export function formatYiJi(yi, ji) {
  * 每个字段都兜底成空串：`String(undefined)` 会把字面量 "undefined" 画到海报上。
  */
 export function buildVars(reading, cfg) {
-  const { settings, scoring, copy } = cfg
+  const { settings, copy } = cfg
   const r = reading ?? {}
   const vars = r.vars ?? {}
-  const dims = scoring.dimensions
-  const labels = scoring.dimensionLabels
-  const scores = r.scores ?? {}
 
   return {
     title: settings.displayTitle ?? '',
@@ -60,7 +73,7 @@ export function buildVars(reading, cfg) {
     name: vars.name ?? '',
     dept: vars.dept ?? '',
     identity: r.identity?.text ?? '',
-    scoreRow: dims.map((d) => `${labels[d] ?? ''} ${scores[d] ?? 0}`).join('  ·  '),
+    scoreRow: formatScoreRow(r.scores, cfg),
     fortuneLevel: r.fortune?.level ?? '',
     fortuneVerse: r.fortune?.verse ?? '',
     fortuneYi: r.fortune?.yi ?? '',

@@ -14,7 +14,7 @@ const debugPoster = import.meta.env.DEV && new URLSearchParams(location.search).
 // 模板 v-if="debugPoster"」——后者看着更直白，但**摇不掉**：<script setup> 会把
 // 模板里引用的绑定包一层 unref()，条件于是编译成 `unref(false)`；unref 是运行时
 // 函数调用，压缩器折不掉这个三元，组件的引用就一直挂着，整个 DebugPoster
-// （12 条用例的字符串 + 样式）都会进产物。实测过，确实如此。
+// （用例字符串 + 样式）都会进产物。实测过，确实如此。
 // 而这里 import.meta.env.DEV 在生产构建被替换成常量 false 后，三元整条被折掉，
 // 动态 import 根本不会进依赖图，连它的 chunk 与样式都不会产出。
 const DebugPoster = debugPoster
