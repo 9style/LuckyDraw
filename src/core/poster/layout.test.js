@@ -56,7 +56,10 @@ describe('元素自身的完整性', () => {
   })
 
   it('每个元素声明的字号都能被 defaultMeasure 用', () => {
-    for (const b of boxes) expect(typeof defaultMeasure('测试', b.font)).toBe('number')
+    // 必须用 Number.isFinite 而不是 typeof —— `typeof NaN === 'number'`，
+    // 非数字的 font（如 "abc"）会算出 NaN 并让这条断言形同虚设，
+    // 而 Task 8 要手工调 poster.json 的字号，那正是最容易键入非数字值的时刻。
+    for (const b of boxes) expect(Number.isFinite(defaultMeasure('测试', b.font))).toBe(true)
   })
 })
 
